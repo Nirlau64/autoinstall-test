@@ -19,6 +19,5 @@ autoinstall:
   snaps:
     - name: teams-for-linux
     - name: onenote-desktop
-    - name: outlook-for-linux
     - name: code
       classic: true
