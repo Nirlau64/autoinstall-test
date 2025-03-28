@@ -1,0 +1,24 @@
+#cloud-config
+autoinstall:
+  version: 1
+  source:
+  id: ubuntu-desktop
+  identity:
+    hostname: ubuntu-desktop
+    username: user
+    password: "469f97570d91bae8302dc0417444e378f0dcdb5763ec44bdc3e97bafe8af196e"
+  keyboard:
+    layout: de
+  timezone: Europe/Berlin
+  storage:
+    layout:
+      name: lvm
+  packages:
+    - vim
+    - nano
+  snaps:
+    - name: teams-for-linux
+    - name: onenote-desktop
+    - name: outlook-for-linux
+    - name: code
+      classic: true
