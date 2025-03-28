@@ -22,3 +22,4 @@ autoinstall:
     - name: outlook-for-linux
     - name: code
       classic: true
+#test
