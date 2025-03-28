@@ -6,7 +6,7 @@ autoinstall:
   identity:
     hostname: ubuntu-desktop
     username: user
-    password: "469f97570d91bae8302dc0417444e378f0dcdb5763ec44bdc3e97bafe8af196e"
+    password: "$6$ZE4WV3QRJhPUnsNv$BpkTBYjUOxOiWV5sNPYDSitTwxW.3NHLmhRqptzpa8a4KTxGpkvMaSDbyq4PVri9kdpD1t7ldUBgwB6uveObg."
   keyboard:
     layout: de
   timezone: Europe/Berlin
