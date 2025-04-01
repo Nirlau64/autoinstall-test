@@ -23,8 +23,6 @@ autoinstall:
       classic: true
 
   late-commands:
-    - curtin in-target -- apt-get install -y wget gnupg
-    - curtin in-target -- apt-get update
     - curtin in-target -- apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EB3E94ADBE1229CF
     - curtin in-target -- sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/edge stable main" > /etc/apt/sources.list.d/microsoft-edge.list'
     - curtin in-target -- apt-get update
