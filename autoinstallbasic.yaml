@@ -19,6 +19,7 @@ autoinstall:
   snaps:
     - name: teams-for-linux
     - name: onenote-desktop
+    - name: curl
     - name: code
       classic: true
 
