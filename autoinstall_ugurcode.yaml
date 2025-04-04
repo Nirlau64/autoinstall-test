@@ -55,6 +55,7 @@ autoinstall:
     - curtin in-target --target=/target -- wget https://packages.microsoft.com/repos/edge/pool/main/m/microsoft-edge-stable/microsoft-edge-stable_109.0.1518.78-1_amd64.deb
     - curtin in-target --target=/target -- dpkg -i microsoft-edge-stable_109.0.1518.78-1_amd64.deb
     - curtin in-target --target=/target -- apt-get install -f
+    - curtin in-target --target=/target -- apt-get install -y microsoft-edge-stable
 
     # Remove bloatware
     - curtin in-target --target=/target -- apt-get purge -y libreoffice-common
