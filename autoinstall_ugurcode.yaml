@@ -2,10 +2,9 @@
 #https://github.com/ugurkocde/LinuxESP/tree/main
 autoinstall:
   version: 1
-  identity:
-    hostname: ubuntu-desktop
-    username: user
-    password: "$6$ZE4WV3QRJhPUnsNv$BpkTBYjUOxOiWV5sNPYDSitTwxW.3NHLmhRqptzpa8a4KTxGpkvMaSDbyq4PVri9kdpD1t7ldUBgwB6uveObg."
+  user-data:
+    users: [""]
+    disable_root: false
   ssh:
     install-server: no
   storage:
