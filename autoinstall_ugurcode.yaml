@@ -50,7 +50,6 @@ autoinstall:
     - curtin in-target --target=/target -- mkdir -p /usr/share/keyrings
     - curtin in-target --target=/target -- wget -q -O /tmp/microsoft.asc https://packages.microsoft.com/keys/microsoft.asc
     - curtin in-target --target=/target -- gpg --dearmor -o /usr/share/keyrings/microsoft-edge.gpg /tmp/microsoft.asc
-    - curtin in-target --target=/target -- rm -f /tmp/microsoft.asc
     - curtin in-target --target=/target -- add-apt-repository "deb [arch=amd64] https://packages.microsoft.com/repos/edge stable main"
     - curtin in-target --target=/target -- apt-get update
     - curtin in-target --target=/target -- apt-get install -y microsoft-edge-stable
