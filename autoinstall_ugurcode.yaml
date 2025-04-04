@@ -63,9 +63,6 @@ autoinstall:
     # Convert the key to GPG format and save it
     - curtin in-target --target=/target -- gpg --dearmor -o /usr/share/keyrings/microsoft-edge.gpg /tmp/microsoft.asc
 
-    # Remove the temporary key file
-    - curtin in-target --target=/target -- rm -f /tmp/microsoft.asc
-
     # Add the Microsoft Edge repository directly to sources.list.d
     - curtin in-target --target=/target -- sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft-edge.gpg] https://packages.microsoft.com/repos/edge stable main" > /etc/apt/sources.list.d/microsoft-edge.list'
 
