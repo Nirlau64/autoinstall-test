@@ -1,35 +1,83 @@
 #cloud-config
+# This is a cloud-init config file for Ubuntu 24.04 LTS
+# It is used to automate the installation of Ubuntu on a system.
+# This ius the first working version that installs Intune & Microsoft Edge
+# It is based on the autoinstall config file from the LinuxESP project:
+# https://github.com/ugurkocde/LinuxESP/tree/main
+# You after successfull installation you will be asked for username, password, hostname, locale, and timezone.
 autoinstall:
   version: 1
-  source:
-  id: ubuntu-desktop
-  identity:
-    hostname: ubuntu-desktop
-    username: user
-    password: "$6$ZE4WV3QRJhPUnsNv$BpkTBYjUOxOiWV5sNPYDSitTwxW.3NHLmhRqptzpa8a4KTxGpkvMaSDbyq4PVri9kdpD1t7ldUBgwB6uveObg."
-  keyboard:
-    layout: de
-  timezone: Europe/Berlin
+  user-data:
+    users: [""]
+    disable_root: false
+  ssh:
+    install-server: no
   storage:
     layout:
       name: lvm
+  keyboard:
+    layout: de
+  locale: en_US
   packages:
-    - vim
-    - nano
-  snaps:
-    - name: teams-for-linux
-    - name: onenote-desktop
+    - curl
+    - wget
+  snaps: # Install apps from this catalog: https://snapcraft.io/store
     - name: code
       classic: true
-
+    - name: powershell
+    - name: pycharm-community
+    - name: teams-for-linux
+    - name: onenote-desktop
   late-commands:
-    - curtin in-target -- curl -s https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /etc/apt/trusted.gpg.d/microsoft.gpg
-    - curtin in-target -- sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/edge stable main" > /etc/apt/sources.list.d/microsoft-edge.list'
-    - curtin in-target -- apt-get update
-    - curtin in-target -- apt-get install -y microsoft-edge-stable
-    - curtin in-target -- curl -s https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /etc/apt/trusted.gpg.d/microsoft.asc.gpg
-    - curtin in-target -- sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/ubuntu/24.04/prod noble main" > /etc/apt/sources.list.d/microsoft-prod.list'  # Zeile je nach Zielversion anpassen
-    - curtin in-target -- apt-get update
-    - curtin in-target -- apt-get install -y intune-portal
-    - curtin in-target -- apt-get install -y unattended-upgrades
-    - curtin in-target -- dpkg-reconfigure -plow unattended-upgrades
+    # Update packages
+    - curtin in-target --target=/target -- apt-get update
+    - curtin in-target --target=/target -- apt-get upgrade -y
+
+    # Install Microsoft Intune Portal
+    - curtin in-target --target=/target -- mkdir -p /tmp/microsoft
+    - curtin in-target --target=/target -- sh -c 'cd /tmp/microsoft && curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg'
+    - curtin in-target --target=/target -- install -o root -g root -m 644 /tmp/microsoft/microsoft.gpg /usr/share/keyrings/microsoft.gpg
+    - curtin in-target --target=/target -- sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/ubuntu/24.04/prod noble main" > /etc/apt/sources.list.d/microsoft-ubuntu-noble-prod.list'
+    - curtin in-target --target=/target -- apt-get update
+    - curtin in-target --target=/target -- apt-get install -y intune-portal
+
+    # # Install MDE
+    # - curtin in-target --target=/target -- wget -O /tmp/microsoft/mde_installer.sh https://raw.githubusercontent.com/microsoft/mdatp-xplat/refs/heads/master/linux/installation/mde_installer.sh
+    # - curtin in-target --target=/target -- chmod +x /tmp/microsoft/mde_installer.sh
+    # - curtin in-target --target=/target -- /tmp/microsoft/mde_installer.sh --install --channel prod -y
+
+    # # Initialize MDE service
+    # - curtin in-target --target=/target -- systemctl daemon-reload
+    # - curtin in-target --target=/target -- systemctl enable mdatp
+    # - curtin in-target --target=/target -- systemctl start mdatp
+
+    # # Install Microsoft Edge
+    # - curtin in-target --target=/target -- mkdir -p /usr/share/keyrings
+    # - curtin in-target --target=/target -- wget -q -O /tmp/microsoft.asc https://packages.microsoft.com/keys/microsoft.asc
+    # - curtin in-target --target=/target -- gpg --dearmor -o /usr/share/keyrings/microsoft-edge.gpg /tmp/microsoft.asc
+    # - curtin in-target --target=/target -- add-apt-repository "deb [arch=amd64] https://packages.microsoft.com/repos/edge stable main"
+    # - curtin in-target --target=/target -- apt-get update
+    # - curtin in-target --target=/target -- apt-get install -y microsoft-edge-stable
+
+    # Install Microsoft Edge
+    - curtin in-target --target=/target -- mkdir -p /usr/share/keyrings
+    - curtin in-target --target=/target -- wget -q -O /tmp/microsoft.asc https://packages.microsoft.com/keys/microsoft.asc
+    - curtin in-target --target=/target -- gpg --dearmor -o /usr/share/keyrings/microsoft-edge.gpg /tmp/microsoft.asc
+    - curtin in-target --target=/target -- sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft-edge.gpg] https://packages.microsoft.com/repos/edge stable main" > /etc/apt/sources.list.d/microsoft-edge.list'
+    - curtin in-target --target=/target -- apt-get update
+    - curtin in-target --target=/target -- apt-get install -y microsoft-edge-stable
+
+
+    # Remove bloatware
+    - curtin in-target --target=/target -- apt-get purge -y libreoffice-common
+    - curtin in-target --target=/target -- apt-get purge -y libreoffice*
+    - curtin in-target --target=/target -- apt-get purge -y remmina*
+    - curtin in-target --target=/target -- apt-get purge -y transmission*
+
+    # Clean up
+    - curtin in-target --target=/target -- apt-get autoremove -y
+    - curtin in-target --target=/target -- apt-get clean
+    - curtin in-target --target=/target -- rm -rf /tmp/microsoft
+
+    # Reboot
+    - curtin in-target --target=/target -- reboot
