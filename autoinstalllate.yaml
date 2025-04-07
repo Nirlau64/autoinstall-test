@@ -67,7 +67,6 @@ autoinstall:
     - curtin in-target --target=/target -- apt-get update
     - curtin in-target --target=/target -- apt-get install -y microsoft-edge-stable
 
-
     # Remove bloatware
     - curtin in-target --target=/target -- apt-get purge -y libreoffice-common
     - curtin in-target --target=/target -- apt-get purge -y libreoffice*
@@ -78,6 +77,21 @@ autoinstall:
     - curtin in-target --target=/target -- apt-get autoremove -y
     - curtin in-target --target=/target -- apt-get clean
     - curtin in-target --target=/target -- rm -rf /tmp/microsoft
+
+    # #Install authd and EntraID Broker
+    # - curtin in-target --target=/target -- add-apt-repository ppa:ubuntu-enterprise-desktop/authd
+    # - curtin in-target --target=/target -- apt-get update
+    # - curtin in-target --target=/target -- apt-get install -y authd
+    # - curtin in-target --target=/target -- snap install authd-msentraid
+
+    # #Konfiguriere authd
+    # - curtin in-target --target=/target -- mkdir -p /etc/authd/brokers.d/
+    # - curtin in-target --target=/target -- cp /snap/authd-msentraid/current/conf/authd/msentraid.conf /etc/authd/brokers.d/
+    # - curtin in-target --target=/target -- sh -c 'cat <<EOF > /var/snap/authd-msentraid/current/broker.conf
+    #   [oidc]
+    #   issuer = https://login.microsoftonline.com/<ISSUER_ID>/v2.0
+    #   client_id = <CLIENT_ID>
+    #   EOF'
 
     # Reboot
     - curtin in-target --target=/target -- reboot
