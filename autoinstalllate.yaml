@@ -84,15 +84,15 @@ autoinstall:
     - curtin in-target --target=/target -- apt-get install -y authd gnome-shell yaru-theme-gnome-shell
     - curtin in-target --target=/target -- snap install authd-msentraid
 
-    #Konfiguriere authd
-    - curtin in-target --target=/target -- mkdir -p /etc/authd/brokers.d/
-    - curtin in-target --target=/target -- cp /snap/authd-msentraid/current/conf/authd/msentraid.conf /etc/authd/brokers.d/
-    - curtin in-target --target=/target -- sh -c 'cat <<EOF > /var/snap/authd-msentraid/current/broker.conf
-      [oidc]
-      issuer = https://login.microsoftonline.com/fefcf947-b4bd-47a5-a7d5-20360521a5ac/v2.0
-      client_id = 66f864da-cb20-4025-99b7-9fa63bdebd62
-      EOF'
-    - curtin in-target --target=/target -- systemctl restart authd && snap restart authd-msentraid
+    # #Konfiguriere authd
+    # - curtin in-target --target=/target -- mkdir -p /etc/authd/brokers.d/
+    # - curtin in-target --target=/target -- cp /snap/authd-msentraid/current/conf/authd/msentraid.conf /etc/authd/brokers.d/
+    # - curtin in-target --target=/target -- sh -c 'cat <<EOF > /var/snap/authd-msentraid/current/broker.conf
+    #   [oidc]
+    #   issuer = https://login.microsoftonline.com/<Tenant ID>/v2.0
+    #   client_id = <Client ID>
+    #   EOF'
+    # - curtin in-target --target=/target -- systemctl restart authd && snap restart authd-msentraid
 
     # Reboot
     - curtin in-target --target=/target -- reboot
