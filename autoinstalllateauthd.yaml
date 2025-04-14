@@ -17,6 +17,7 @@ autoinstall:
   packages:
   - curl
   - wget
+  - thunderbird
   snaps:
   - name: code
     classic: true
