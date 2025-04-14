@@ -1,0 +1,86 @@
+#cloud-config
+# This is a cloud-init config file for Ubuntu 24.04 LTS
+# It automates the installation of Ubuntu with Intune, Microsoft Edge and Entra ID (authd).
+autoinstall:
+  version: 1
+  user-data:
+    users: [ "" ]
+    disable_root: false
+    runcmd:
+      - [ bash, -c, "/usr/local/sbin/setup-authd.sh" ]
+  ssh:
+    install-server: no
+  storage:
+    layout:
+      name: lvm
+  keyboard:
+    layout: de
+  locale: en_US
+  packages:
+  - curl
+  - wget
+  snaps:
+  - name: code
+    classic: true
+  - name: powershell
+  - name: pycharm-community
+  - name: teams-for-linux
+  - name: authd-msentraid
+  late-commands:
+  - curtin in-target --target=/target -- apt-get update
+  - curtin in-target --target=/target -- apt-get upgrade -y
+
+  # Install Microsoft Intune Portal
+  - curtin in-target --target=/target -- mkdir -p /tmp/microsoft
+  - curtin in-target --target=/target -- sh -c 'cd /tmp/microsoft && curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg'
+  - curtin in-target --target=/target -- install -o root -g root -m 644 /tmp/microsoft/microsoft.gpg /usr/share/keyrings/microsoft.gpg
+  - curtin in-target --target=/target -- sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/ubuntu/24.04/prod noble main" > /etc/apt/sources.list.d/microsoft-ubuntu-noble-prod.list'
+  - curtin in-target --target=/target -- apt-get update
+  - curtin in-target --target=/target -- apt-get install -y intune-portal
+
+  # Install Microsoft Edge
+  - curtin in-target --target=/target -- mkdir -p /usr/share/keyrings
+  - curtin in-target --target=/target -- wget -q -O /tmp/microsoft.asc https://packages.microsoft.com/keys/microsoft.asc
+  - curtin in-target --target=/target -- gpg --dearmor -o /usr/share/keyrings/microsoft-edge.gpg /tmp/microsoft.asc
+  - curtin in-target --target=/target -- sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft-edge.gpg] https://packages.microsoft.com/repos/edge stable main" > /etc/apt/sources.list.d/microsoft-edge.list'
+  - curtin in-target --target=/target -- apt-get update
+  - curtin in-target --target=/target -- apt-get install -y microsoft-edge-stable
+
+  # Remove bloatware
+  - curtin in-target --target=/target -- apt-get purge -y libreoffice-common
+  - curtin in-target --target=/target -- apt-get purge -y libreoffice*
+  - curtin in-target --target=/target -- apt-get purge -y remmina*
+  - curtin in-target --target=/target -- apt-get purge -y transmission*
+
+  # Clean up
+  - curtin in-target --target=/target -- apt-get autoremove -y
+  - curtin in-target --target=/target -- apt-get clean
+  - curtin in-target --target=/target -- rm -rf /tmp/microsoft
+
+  # Install authd and Entra ID Broker
+  - curtin in-target --target=/target -- add-apt-repository -y ppa:ubuntu-enterprise-desktop/authd
+  - curtin in-target --target=/target -- apt-get update
+  - curtin in-target --target=/target -- apt-get install -y authd gnome-shell yaru-theme-gnome-shell
+
+  # Download setup script for Entra authd configuration (will run at first boot)
+  - curtin in-target --target=/target -- wget -O /target/usr/local/sbin/setup-authd.sh https://github.com/YOUR-GITHUB-USERNAME/YOUR-REPO/raw/main/setup-authd.sh # Replace with your GitHub username and repo
+  - curtin in-target --target=/target -- chmod +x /target/usr/local/sbin/setup-authd.sh
+
+  # Create systemd unit to run setup once on first boot
+  - curtin in-target --target=/target -- bash -c 'cat <<EOF > /target/etc/systemd/system/setup-authd.service
+    [Unit]
+    Description=Configure authd after snap init
+    After=snapd.seeded.service
+
+    [Service]
+    ExecStart=/usr/local/sbin/setup-authd.sh
+    Type=oneshot
+    RemainAfterExit=true
+
+    [Install]
+    WantedBy=multi-user.target
+    EOF'
+  - curtin in-target --target=/target -- systemctl enable setup-authd.service
+
+  # Reboot
+  - curtin in-target --target=/target -- reboot
