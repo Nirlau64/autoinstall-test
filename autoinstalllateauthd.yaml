@@ -6,8 +6,6 @@ autoinstall:
   user-data:
     users: [ "" ]
     disable_root: false
-    runcmd:
-      - [ bash, -c, "/usr/local/sbin/setup-authd.sh" ]
   ssh:
     install-server: no
   storage:
