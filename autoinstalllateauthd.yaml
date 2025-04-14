@@ -24,6 +24,7 @@ autoinstall:
   - name: pycharm-community
   - name: teams-for-linux
   - name: authd-msentraid
+  - name: 1password
   late-commands:
   - curtin in-target --target=/target -- apt-get update
   - curtin in-target --target=/target -- apt-get upgrade -y
