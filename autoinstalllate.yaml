@@ -14,7 +14,7 @@ autoinstall:
     install-server: no
   storage:
     layout:
-      name: lvm
+      name: direct
   keyboard:
     layout: de
   locale: en_US
