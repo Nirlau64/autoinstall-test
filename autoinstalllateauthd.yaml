@@ -17,13 +17,11 @@ autoinstall:
   packages:
   - curl
   - wget
-  - thunderbird
   snaps:
   - name: code
     classic: true
   - name: powershell
   - name: pycharm-community
-  - name: teams-for-linux
   - name: authd-msentraid
   - name: 1password
   late-commands:
