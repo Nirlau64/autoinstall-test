@@ -1,0 +1,132 @@
+#cloud-config
+# This is a cloud-init config file for Ubuntu 24.04 LTS
+# It automates the installation of Ubuntu with Intune, Microsoft Edge, Entra ID (authd) and snx-rs with GUI.
+autoinstall:
+  version: 1
+  user-data:
+    users: [ "" ]
+    disable_root: false
+  ssh:
+    install-server: no
+  storage:
+    layout:
+      name: direct
+  keyboard:
+    layout: de
+  locale: en_US
+  packages:
+  - curl
+  - wget
+  - build-essential
+  - libssl-dev
+  - libgtk-4-dev
+  - libudev-dev
+  - libclang-dev
+  - clang
+  - git
+  - pkg-config
+  - libglib2.0-dev
+  - libgdk-pixbuf-2.0-dev
+  - libpango1.0-dev
+  - libatk1.0-dev
+  - libgtk-3-dev
+
+  snaps:
+  - name: code
+    classic: true
+  - name: powershell
+  - name: pycharm-community
+  - name: authd-msentraid
+  - name: 1password
+
+late-commands:
+  # System aktualisieren
+  - curtin in-target --target=/target -- apt-get update
+  - curtin in-target --target=/target -- apt-get upgrade -y
+
+  # Microsoft Intune Portal
+  - curtin in-target --target=/target -- mkdir -p /tmp/microsoft
+  - curtin in-target --target=/target -- sh -c 'cd /tmp/microsoft && curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg'
+  - curtin in-target --target=/target -- install -o root -g root -m 644 /tmp/microsoft/microsoft.gpg /usr/share/keyrings/microsoft.gpg
+  - curtin in-target --target=/target -- sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/ubuntu/24.04/prod noble main" > /etc/apt/sources.list.d/microsoft-ubuntu-noble-prod.list'
+  - curtin in-target --target=/target -- apt-get update
+  - curtin in-target --target=/target -- apt-get install -y intune-portal
+
+  # Microsoft Edge
+  - curtin in-target --target=/target -- mkdir -p /usr/share/keyrings
+  - curtin in-target --target=/target -- wget -q -O /tmp/microsoft.asc https://packages.microsoft.com/keys/microsoft.asc
+  - curtin in-target --target=/target -- gpg --dearmor -o /usr/share/keyrings/microsoft-edge.gpg /tmp/microsoft.asc
+  - curtin in-target --target=/target -- sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft-edge.gpg] https://packages.microsoft.com/repos/edge stable main" > /etc/apt/sources.list.d/microsoft-edge.list'
+  - curtin in-target --target=/target -- apt-get update
+  - curtin in-target --target=/target -- apt-get install -y microsoft-edge-stable
+
+  # Entferne Bloatware
+  - curtin in-target --target=/target -- apt-get purge -y libreoffice-common
+  - curtin in-target --target=/target -- apt-get purge -y libreoffice*
+  - curtin in-target --target=/target -- apt-get purge -y remmina*
+  - curtin in-target --target=/target -- apt-get purge -y transmission*
+  - curtin in-target --target=/target -- apt-get autoremove -y
+  - curtin in-target --target=/target -- apt-get clean
+  - curtin in-target --target=/target -- rm -rf /tmp/microsoft
+
+  # Entra ID Broker (authd)
+  - curtin in-target --target=/target -- add-apt-repository -y ppa:ubuntu-enterprise-desktop/authd
+  - curtin in-target --target=/target -- apt-get update
+  - curtin in-target --target=/target -- apt-get install -y authd gnome-shell yaru-theme-gnome-shell
+
+  # snx-rs mit GUI bauen
+  - curtin in-target --target=/target -- curl https://sh.rustup.rs -sSf | sh -s -- -y
+  - curtin in-target --target=/target -- sh -c 'source /root/.cargo/env && git clone https://github.com/vanshg/snx-rs.git /opt/snx-rs'
+  - curtin in-target --target=/target -- sh -c 'source /root/.cargo/env && cd /opt/snx-rs && cargo build --release'
+  - curtin in-target --target=/target -- cp /opt/snx-rs/target/release/snx* /usr/local/bin/
+
+  # Systemd-Service für CLI (optional nutzbar)
+  - curtin in-target --target=/target -- bash -c 'cat <<EOF > /etc/systemd/system/snx.service
+    [Unit]
+    Description=SNX-RS Auto VPN
+    After=network-online.target
+    Wants=network-online.target
+
+    [Service]
+    Type=simple
+    ExecStart=/usr/local/bin/snx --ignore-server-cert connect --config /etc/snx/config.toml
+    Restart=on-failure
+
+    [Install]
+    WantedBy=multi-user.target
+    EOF'
+  - curtin in-target --target=/target -- systemctl enable snx.service
+
+  # GUI-Autostart systemweit (für alle Benutzer)
+  - curtin in-target --target=/target -- mkdir -p /etc/xdg/autostart
+  - curtin in-target --target=/target -- bash -c 'cat <<EOF > /etc/xdg/autostart/snx-rs-gui.desktop
+    [Desktop Entry]
+    Name=SNX-RS VPN
+    Comment=Startet SNX-RS VPN GUI mit Zertifikats-Bypass
+    Exec=/usr/local/bin/snx-rs-gui --ignore-server-cert
+    Icon=network-vpn
+    Terminal=false
+    Type=Application
+    Categories=Network;
+    X-GNOME-Autostart-enabled=true
+    EOF'
+
+  # Desktop-Verknüpfung für neue Benutzer
+  - curtin in-target --target=/target -- mkdir -p /etc/skel/Desktop
+  - curtin in-target --target=/target -- cp /etc/xdg/autostart/snx-rs-gui.desktop /etc/skel/Desktop/snx-rs-gui.desktop
+  - curtin in-target --target=/target -- chmod +x /etc/skel/Desktop/snx-rs-gui.desktop
+
+  # Desktop-Eintrag im Menü
+  - curtin in-target --target=/target -- bash -c 'cat <<EOF > /usr/share/applications/snx-rs-gui.desktop
+    [Desktop Entry]
+    Name=SNX-RS GUI
+    Comment=Connect to VPN
+    Exec=/usr/local/bin/snx-rs-gui --ignore-server-cert
+    Icon=network-vpn
+    Terminal=false
+    Type=Application
+    Categories=Network;
+    EOF'
+
+  # Neustart nach Abschluss
+  - curtin in-target --target=/target -- reboot
