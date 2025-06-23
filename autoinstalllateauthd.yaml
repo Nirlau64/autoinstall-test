@@ -1,6 +1,11 @@
 #cloud-config
 # This is a cloud-init config file for Ubuntu 24.04 LTS
-# It automates the installation of Ubuntu with Intune, Microsoft Edge and Entra ID (authd).
+# It automates the installation of Ubuntu with Intune, Microsoft Edge, Entra ID (authd) and SNX-RS.
+# It also includes the installation of some common applications like Visual Studio Code, PowerShell, PyCharm Community, and 1Password.
+# AuthD will be installed but needs to be configured after installation.
+# Dependencies for SNX-RS are included but installation and configuration needs to be done manually.
+# Author: Laurin Lange
+# Original is based on: ugurkocde/LinuxESP
 autoinstall:
   version: 1
   user-data:
@@ -15,8 +20,10 @@ autoinstall:
     layout: de
   locale: en_US
   packages:
+  # General dependencies
   - curl
   - wget
+  # SNX-RS dependencies
   - build-essential 
   - libssl-dev 
   - libgtk-4-dev 
